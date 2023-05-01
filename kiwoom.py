@@ -50,3 +50,12 @@ print(name, "의 주식수는: ", stock_cnt)
 # 거래대금 500이상 99999999이하
 # 주가비교: 1봉전 종가 <= 0봉전 저가
 # 거래대금 순위 상위 150위
+
+kiwoom.GetConditionLoad()
+
+conditions = kiwoom.GetConditionNameList()
+condition_index = conditions[0][0]
+condition_name = conditions[0][1]
+codes = kiwoom.SendCondition("0101", condition_name, condition_index, 0)
+
+print(codes)
