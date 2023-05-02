@@ -17,13 +17,17 @@ class MyWindow(QMainWindow):
         self.kiwoom.SendCondition("0101", condition_name, condition_index, 0)
 
         print("종목코드", "종목명")
-        stock_list = get_stock_list()
+        stock_list = self.kiwoom.get_stock_list()
+        self.codes = []
         for code in stock_list:
-            print(code)
+            self.codes.append(code[0])
+            print(code[0], code[1])
+        self.data = []
+        self.kiwoom.Get2Resistance(self.codes, self.data, self.handle_resistance)
+        print(self.data)
 
-
-        
-
+    def handle_resistance(self, code, data):
+        print(code, data)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

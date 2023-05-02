@@ -11,6 +11,8 @@ class Kiwoom:
         self.ocx.OnReceiveConditionVer.connect(self.OnReceiveConditionVer)
         self.ocx.OnReceiveTrCondition.connect(self.OnReceiveTRCondition)
         self.ocx.OnReceiveRealCondition.connect(self.OnReceiveRealCondition)
+        self.ocx.OnReceiveTrData.connect(self.OnReceiveTrData)
+        self.tr_loop = {}
 
     def CommConnect(self):
         self.ocx.dynamicCall("CommConnect()")
@@ -46,6 +48,8 @@ class Kiwoom:
     def SendCondition(self, screen, condition_name, index, search):
         print("SendCondition", screen, condition_name, index, search)
         self.ocx.dynamicCall("SendCondition(QString, QString, int, int)", screen, condition_name, index, search)
+        self.send_condition_loop = QEventLoop()
+        self.send_condition_loop.exec_()
 
     def SendConditionStop(self, screen, condition_name, index):
         self.ocx.dynamicCall("SendConditionStop(QString, QString, int)", screen, condition_name, index)
@@ -62,9 +66,36 @@ class Kiwoom:
         for code in codes[:-1]:
             name = self.GetMasterCodeName(code)
             stock_list.append([code, name])
+        self.send_condition_loop.exit()
 
     def OnReceiveRealCondition(self, code, event, condition_name, condition_index):
         print("OnReceiveRealCondition", code, event, condition_name, condition_index)
 
-def get_stock_list():
-    return stock_list
+    def get_stock_list(self):
+        return stock_list
+
+    def GetCommData(self, trcode, rqname, index, item):
+        data = self.ocx.dynamicCall("GetCommData(QString, QString, int, QString)", trcode, rqname, index, item)
+        return data.strip()
+    
+    def Get2Resistance(self, codes, data, callback):
+        result = []
+        for code in codes:
+            self.ocx.dynamicCall("SetInputValue(QString, QString)", "종목코드", code)
+            self.ocx.dynamicCall("CommRqData(QString, QString, int, QString)", "주식기본정보요청", "opt10001", 0, "0101")
+            self.tr_loop = QEventLoop()
+            self.tr_loop.exec_()
+
+            high_price = self.GetCommData("opt10001", "", 0, "고가")
+            low_price = self.GetCommData("opt10001", "", 0, "저가")
+            close_price = self.GetCommData("opt10001", "", 0, "종가")
+            result.append({"code": code, "high_price": high_price, "low_price": low_price, "close_price": close_price})
+
+            datas = {"high_price": high_price, "low_price": low_price, "close_price": close_price}
+            callback(code, datas)
+        return result
+        
+    def OnReceiveTrData(self, screen, rq_name, tr_code, record_name, prev_next):
+        if tr_code == "opt10001":
+            self.tr_loop.exit()
+            
