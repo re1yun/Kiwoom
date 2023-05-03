@@ -17,8 +17,8 @@ class Kiwoom:
 
     def OnReceiveTrData(self, screen, rqname, trcode, record, next):
         print(screen, rqname, trcode, record, next)
-        per = self.GetCommData(trcode, rqname, 0, "PER")
-        pbr = self.GetCommData(trcode, rqname, 0, "PBR")
+        per = self.GetCommData(trcode, rqname, 0, "고가")
+        pbr = self.GetCommData(trcode, rqname, 0, "저가")
         print(per, pbr)
 
     def GetMasterCodeName(self, code):
