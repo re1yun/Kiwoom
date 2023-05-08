@@ -27,8 +27,7 @@ class MyWindow(QMainWindow):
         stock_data = self.kiwoom.get_stock_data()
         print("printing stock data")
         for data in stock_data:
-            resist = (data["high_price"] + data["low_price"] + data["close_price"]) / 3 + (data["high_price"] - data["low_price"])
-            print(resist)
+            print(data["code"], data["date"], data["high_price"], data["close_price"], data["r2"])
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

@@ -1,5 +1,6 @@
 from PyQt5.QAxContainer import *
 from PyQt5.QtCore import *
+from datetime import date, timedelta
 
 global stock_list, stock_data
 stock_list = []
@@ -80,23 +81,34 @@ class Kiwoom:
     
     def Get2Resistance(self, code):
         self.ocx.dynamicCall("SetInputValue(QString, QString)", "종목코드", code)
-        self.ocx.dynamicCall("CommRqData(QString, QString, int, QString)", "주식기본정보요청", "opt10001", 0, "0101")
+        기준일자 = date.today().strftime("%Y%m%d")
+        self.ocx.dynamicCall("SetInputValue(QString, QString)", "기준일자", 기준일자)
+        self.ocx.dynamicCall("SetInputValue(QString, QString)", "수정주가구분", "1")
+        self.ocx.dynamicCall("CommRqData(QString, QString, int, QString)", "주식기본정보요청", "opt10081", 0, "0101")
         self.tr_loop = QEventLoop()
         self.tr_loop.exec_()
         
     def OnReceiveTrData(self, screen, rq_name, tr_code, record_name, prev_next):
-        if tr_code == "opt10001":
-            print("OnReceiveTrData", screen, rq_name, tr_code, record_name, prev_next)
-            high_price = self.GetCommData(tr_code, rq_name, 0, "고가")
-            low_price = self.GetCommData(tr_code, rq_name, 0, "저가")
-            close_price = self.GetCommData(tr_code, rq_name, 0, "현재가")
-            stock_data.append({"high_price": high_price, "low_price": low_price, "close_price": close_price})
+        if tr_code == "opt10081":
+            high_price = int(self.GetCommData(tr_code, rq_name, 1, "고가"))
+            low_price = int(self.GetCommData(tr_code, rq_name, 1, "저가"))
+            code = self.GetCommData(tr_code, rq_name, 0, "종목코드")
+            close_price = int(self.ocx.dynamicCall("GetMasterLastPrice(QString)", code))
+            
+            date = self.GetCommData(tr_code, rq_name, 1, "일자")
+
+            # 피봇 포인트 계산
+            pivot = (high_price + low_price + close_price) / 3
+
+            r2 = pivot + (high_price - low_price)
+
+            stock_data.append({"code": self.GetMasterCodeName(code), "date": date, "high_price": high_price, "low_price": low_price, "close_price": close_price, "pivot": pivot, "r2": r2})
             self.tr_loop.exit()
 
     def GetCommData(self, trcode, rqname, index, item):
         data = self.ocx.dynamicCall("GetCommData(QString, QString, int, QString)", trcode, rqname, index, item)
         data = data.strip()
-        return int(data)
+        return data
     
     def get_stock_data(self):
         print("return stock_data")
