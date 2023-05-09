@@ -69,8 +69,19 @@ class Kiwoom:
             stock_list.append([code, name])
         self.send_condition_loop.exit()
 
+    #조건식 검색후 조건에 맞는 종목들이 실시간으로 들어오고 나감
     def OnReceiveRealCondition(self, code, event, condition_name, condition_index):
         print("OnReceiveRealCondition", code, event, condition_name, condition_index)
+        if event == "I":
+            print("종목편입", code)
+            name = self.GetMasterCodeName(code)
+            stock_list.append([code, name])
+        elif event == "D":
+            print("종목이탈", code)
+            for stock in stock_list:
+                if stock[0] == code:
+                    stock_list.remove(stock)
+                    break
 
     def get_stock_list(self):
         return stock_list
